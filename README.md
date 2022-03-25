@@ -18,8 +18,8 @@ data.csv (House Price Prediction: https://www.kaggle.com/datasets/shree1992/hous
 
 **Results:**
 -
-Number of Neighbors: 3
+MBR >>> Number of Neighbors: 3
 - ![image](https://user-images.githubusercontent.com/98597962/160195973-0121d94f-e30a-496d-9d72-176eab68c93f.png)
 
-Number of Neighbors: 7
+MBR >>> Number of Neighbors: 7
 - ![image](https://user-images.githubusercontent.com/98597962/160196437-23ef8805-adf0-40bc-ad43-12835a3aeefa.png)
