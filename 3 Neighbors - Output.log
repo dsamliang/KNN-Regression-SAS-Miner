@@ -1,0 +1,360 @@
+*------------------------------------------------------------*
+User:                u59396733
+Date:                March 25, 2022
+Time:                20:21:20
+Site:                70094220
+Platform:            Linux
+Maintenance Release: 9.04.01M6P110718
+EM Version:          15.1
+* 
+*------------------------------------------------------------*
+* Training Log
+Date:                March 25, 2022
+Time:                20:21:17
+*------------------------------------------------------------*
+11433  proc freq data=EMWS1.MBR_VariableSet noprint;
+11434  table ROLE*LEVEL/out=WORK.MBRMETA;
+11435  run;
+11436  proc print data=WORK.MBRMETA label noobs;
+11437  var ROLE LEVEL COUNT;
+11438  label ROLE = "%sysfunc(sasmsg(sashelp.dmine, meta_role_vlabel, NOQUOTE))" LEVEL = "%sysfunc(sasmsg(sashelp.dmine, meta_level_vlabel, NOQUOTE))" COUNT = "%sysfunc(sasmsg(sashelp.dmine, rpt_count_vlabel, NOQUOTE))";
+11439  title9 ' ';
+11440  title10 "%sysfunc(sasmsg(sashelp.dmine, rpt_varSummary_title  , NOQUOTE))";
+11441  run;
+11442  title10;
+11443  %let EMNORLEN = %DMNORLEN;
+EMWS1.Part_TRAIN EMWS1.Part_TRAIN
+EMWS1.Part_TRAIN EMWS1.Part_TRAIN EMWS1 Part_TRAIN
+EMWS1.Part_TRAIN EMWS1.Part_TRAIN
+EMWS1.Part_TRAIN EMWS1.Part_TRAIN EMWS1 Part_TRAIN
+>>>>>>>>>>>>>> TARGET(   USE='Y'
+                         REPORT='N'
+                         NAME='price'
+                         ROLE='TARGET'
+                         LEVEL='INTERVAL'
+                         ORDER=''
+                         CREATOR=''
+                         FORMATTYPE='QUANTITY'
+                         FAMILY=''
+                         LOWERLIMIT=.
+                         UPPERLIMIT=.
+                         DISTRIBUTION=''
+                         COMMENT=''
+                         PRICE=.
+                         TYPE='N'
+                         LABEL=''
+                         FORMAT='BEST12.0'
+                         INFORMAT='BEST32.0'
+                         INDEX='N'
+                         INDEXTYPE='NONE'
+                         LENGTH=8
+                      )[10919]
+PERFORMANCE  DETAILS
+WORK.EM_DMDB WORK.EM_DMDB
+WORK.EM_DMDB WORK.EM_DMDB WORK EM_DMDB
+"No decisions defined for target "price"."
+11504  proc print data = EMWS1.MBR_price_DM noobs label;
+11505  var _type_ variable label;
+11506  where _type_ ^in('MATRIX', 'DECISION', 'TRAINPRIOR', 'DATAPRIOR', 'DECPRIOR');
+11507  label _TYPE_ = "%sysfunc(sasmsg(sashelp.dmine, rpt_type_vlabel,     NOQUOTE))" VARIABLE = "%sysfunc(sasmsg(sashelp.dmine, rpt_variable_vlabel, NOQUOTE))" LABEL = "%sysfunc(sasmsg(sashelp.dmine, meta_label_vlabel, NOQUOTE))";
+11508  title9 ' ';
+11509  title10 "%sysfunc(sasmsg(sashelp.dmine, rpt_predDecVars_title  , NOQUOTE))";
+11510  run;
+11511  title10;
+11522  *------------------------------------------------------------*;
+11523  * MBR: Create decision matrix;
+11524  *------------------------------------------------------------*;
+11525  data WORK.price(label="price");
+11526    length   price                                8
+11527             ;
+11528
+11529   price=0;
+11530  output;
+11531   price=12899000;
+11532  output;
+11533   price=551463.250512348;
+11534  output;
+11535  ;
+11536  run;
+11537  proc datasets lib=work nolist;
+11538  modify price(type=PROFIT label=price);
+11539  run;
+11540  quit;
+11541  *------------------------------------------------------------* ;
+11542  * MBR: DMDBClass Macro ;
+11543  *------------------------------------------------------------* ;
+11544  %macro DMDBClass;
+11545
+11546  %mend DMDBClass;
+11547  *------------------------------------------------------------* ;
+11548  * MBR: DMDBVar Macro ;
+11549  *------------------------------------------------------------* ;
+11550  %macro DMDBVar;
+11551      bathrooms bedrooms condition floors price sqft_above sqft_basement sqft_living
+11552     sqft_lot view waterfront yr_built yr_renovated
+11553  %mend DMDBVar;
+11554  *------------------------------------------------------------*;
+11555  * MBR: Create DMDB;
+11556  *------------------------------------------------------------*;
+11557  proc dmdb batch data=EMWS1.Part_TRAIN
+11558  dmdbcat=WORK.MBR_DMDB
+11559  maxlevel = 513
+11560  ;
+11561  id
+11562  _dataobs_
+11563  ;
+11564  var %DMDBVar;
+11565  target
+11566  price
+11567  ;
+11568  run;
+11569  quit;
+11570  *------------------------------------------------------------* ;
+11571  * MBR: Interval Variables Macro ;
+11572  *------------------------------------------------------------* ;
+11573  %macro pmbrvar;
+11574      bathrooms bedrooms condition floors sqft_above sqft_basement sqft_living
+11575     sqft_lot view waterfront yr_built yr_renovated
+11576  %mend pmbrvar;
+11577  proc pmbr data=EMWS1.Part_TRAIN dmdbcat=WORK.MBR_DMDB
+11578  validata = EMWS1.PART_VALIDATE
+11579  testdata = EMWS1.PART_TEST
+11580  outest = EMWS1.MBR_ESTIMATE
+11581  k = 3
+11582  epsilon = 0
+11583  buckets = 8
+11584  method = SCAN
+11585  weighted
+11586  neighbors
+11587  ;
+11588  var %pmbrvar;
+11589  target price;
+11590  score data=EMWS1.PART_TRAIN
+11591  out=EMWS1.MBR_TRAIN
+11592  role = TRAIN
+11593  ;
+11594  id _dataobs_;
+11595  run;
+11596  quit;
+11597  *------------------------------------------------------------*;
+11598  * MBR: Create decision matrix;
+11599  *------------------------------------------------------------*;
+11600  data WORK.price(label="price");
+11601    length   price                                8
+11602             ;
+11603
+11604   price=0;
+11605  output;
+11606   price=12899000;
+11607  output;
+11608   price=551463.250512348;
+11609  output;
+11610  ;
+11611  run;
+11612  proc datasets lib=work nolist;
+11613  modify price(type=PROFIT label=price);
+11614  run;
+11615  quit;
+11616  *------------------------------------------------------------* ;
+11617  * MBR: Interval Variables Macro ;
+11618  *------------------------------------------------------------* ;
+11619  %macro pmbrvar;
+11620      bathrooms bedrooms condition floors sqft_above sqft_basement sqft_living
+11621     sqft_lot view waterfront yr_built yr_renovated
+11622  %mend pmbrvar;
+11623  proc pmbr data=EMWS1.Part_TRAIN dmdbcat=WORK.MBR_DMDB
+11624  outest = WORK.MBR_OUTEST
+11625  k = 3
+11626  epsilon = 0
+11627  buckets = 8
+11628  method = SCAN
+11629  weighted
+11630  neighbors
+11631  ;
+11632  var %pmbrvar;
+11633  target price;
+11634  score data=EMWS1.PART_VALIDATE
+11635  out=EMWS1.MBR_VALIDATE
+11636  role = VALID
+11637  ;
+11638  id _dataobs_;
+11639  run;
+11640  quit;
+11641  *------------------------------------------------------------*;
+11642  * MBR: Create decision matrix;
+11643  *------------------------------------------------------------*;
+11644  data WORK.price(label="price");
+11645    length   price                                8
+11646             ;
+11647
+11648   price=0;
+11649  output;
+11650   price=12899000;
+11651  output;
+11652   price=551463.250512348;
+11653  output;
+11654  ;
+11655  run;
+11656  proc datasets lib=work nolist;
+11657  modify price(type=PROFIT label=price);
+11658  run;
+11659  quit;
+11660  *------------------------------------------------------------* ;
+11661  * MBR: Interval Variables Macro ;
+11662  *------------------------------------------------------------* ;
+11663  %macro pmbrvar;
+11664      bathrooms bedrooms condition floors sqft_above sqft_basement sqft_living
+11665     sqft_lot view waterfront yr_built yr_renovated
+11666  %mend pmbrvar;
+11667  proc pmbr data=EMWS1.Part_TRAIN dmdbcat=WORK.MBR_DMDB
+11668  outest = WORK.MBR_OUTEST
+11669  k = 3
+11670  epsilon = 0
+11671  buckets = 8
+11672  method = SCAN
+11673  weighted
+11674  neighbors
+11675  ;
+11676  var %pmbrvar;
+11677  target price;
+11678  score data=EMWS1.PART_TEST
+11679  out=EMWS1.MBR_TEST
+11680  role = TEST
+11681  ;
+11682  id _dataobs_;
+11683  run;
+11684  quit;
+11685  data EMWS1.MBR_EMOUTFIT;
+11686  length TARGET $32;
+11687  target = "price";
+11688  set EMWS1.MBR_ESTIMATE;
+11689  keep TARGET _NW_--_TASEU_;
+11690  run;
+*------------------------------------------------------------*
+* Score Log
+Date:                March 25, 2022
+Time:                20:21:18
+*------------------------------------------------------------*
+11797  *------------------------------------------------------------*;
+11798  * MBR: Computing metadata for TRAIN data;
+11799  *------------------------------------------------------------*;
+12152  data EMWS1.MBR_EMINFO;
+12153  length TARGET KEY $32 DATA $43;
+12154  input TARGET KEY DATA $;
+12155  cards;
+12159  run;
+12160  proc sort data = EMWS1.MBR_EMINFO NOTHREADS;
+12161  by TARGET KEY;
+12162  run;
+*------------------------------------------------------------*
+* Report Log
+Date:                March 25, 2022
+Time:                20:21:19
+*------------------------------------------------------------*
+12186  data EMWS1.MBR_EMOUTFIT;
+12187  set EMWS1.MBR_EMOUTFIT;
+12188  length TargetLabel $200;
+12189  label targetLabel = "%sysfunc(sasmsg(sashelp.dmine, meta_targetlabel_vlabel, NOQUOTE))";
+12190  run;
+12191  proc sort data=EMWS1.MBR_EMREPORTFIT nothreads;
+12192  by TARGET;
+12193  run;
+12194  %let _EMwarndup = 0;
+12195  %let _EMtargetdup =;
+12196  %let _EMASEtargetdup =;
+12197  data _null_;
+12198  set EMWS1.MBR_EMOUTFIT;
+12199  if .<_ASE_<0.000001 then do;
+12200  call symput('_EMwarndup', '1');
+12201  call symput('_EMtargetdup', target);
+12202  call symput('_EMASEtargetdup', put(_ASE_, best.));
+12203  end;
+12204  run;
+12205  proc sort data=EMWS1.Part_CMeta_TRAIN out=WORK.SUBSETINMETA;
+12206  by NAME;
+12207  run;
+12208  proc sort data=EMWS1.MBR_VariableSet out=WORK.SUBSETVARSET(keep=NAME REPORT);
+12209  by NAME;
+12210  run;
+12211  data WORK.ASSESS_META;
+12212  merge WORK.SUBSETINMETA WORK.SUBSETVARSET;
+12213  by NAME;
+12214  run;
+12215  data EM_temp_assessMeta;
+12216  set EMWS1.MBR_CMeta_TRAIN;
+12217  where role in('DECISION', 'PREDICT', 'RESIDUAL', 'CLASSIFICATION', 'ASSESS', 'COST');
+12218  run;
+12219  data EM_temp_assessdata;
+12220  set EMWS1.MBR_TRAIN(keep=
+12221  P_price
+12222  R_price
+12223  _WARN_
+12224  price
+12225  );
+12226  run;
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+16554  data EM_temp_assessMeta;
+16555  set EMWS1.MBR_CMeta_TRAIN;
+16556  where role in('DECISION', 'PREDICT', 'RESIDUAL', 'CLASSIFICATION', 'ASSESS', 'COST');
+16557  run;
+16558  data EM_temp_assessdata;
+16559  set EMWS1.MBR_VALIDATE(keep=
+16560  P_price
+16561  R_price
+16562  _WARN_
+16563  price
+16564  );
+16565  run;
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+20903  %let _cn = %sysfunc(getoption(CENTER));
+20904  options nocenter;
+20905  proc print data=EMWS1.MBR_EMREPORTFIT noobs label;
+20906  var STAT LABEL TRAIN
+20907  VALIDATE
+20908  TEST
+20909  ;
+20910  by TARGET TARGETLABEL;
+20911  title9 ' ';
+20912  title10 "%sysfunc(sasmsg(sashelp.dmine, rpt_fitstat_title  , NOQUOTE))";
+20913  run;
+20914  title10;
+20915  options &_cn;
+20916  proc datasets library=EMWS1 nolist;
+20917  modify MBR_EMRANK;
+20918  label target = "%sysfunc(sasmsg(sashelp.dmine, rpt_targetvar_vlabel ,   NOQUOTE))";
+20919  label datarole = "%sysfunc(sasmsg(sashelp.dmine, rpt_datarole_vlabel ,    NOQUOTE))";
+20920  run;
+20921  quit;
+20922  %let _cn = %sysfunc(getoption(CENTER));
+20923  options nocenter;
+20924  proc print data=EMWS1.MBR_EMRANK label noobs;
+20925  var
+20926  decile N _targetMean_ _meanP_;
+20927  by
+20928  notsorted DATAROLE
+20929  notsorted TARGET
+20930  notsorted TARGETLABEL
+20931  ;
+20932  title9 ' ';
+20933  title10 "%sysfunc(sasmsg(sashelp.dmine, rpt_scoreranking_title , NOQUOTE))";
+20934  run;
+20935  title10;
+20936  options &_cn;
+20937  proc datasets library=EMWS1 nolist;
+20938  modify MBR_EMSCOREDIST;
+20939  label target = "%sysfunc(sasmsg(sashelp.dmine, rpt_targetvar_vlabel ,      NOQUOTE))";
+20940  label datarole = "%sysfunc(sasmsg(sashelp.dmine, rpt_datarole_vlabel ,    NOQUOTE))";
+20941  run;
+20942  quit;
