@@ -1,8 +1,11 @@
 # KNN-Regression-SAS-Miner
 
-**Dataset:** data.csv (House Price Prediction: https://www.kaggle.com/datasets/shree1992/housedata)
+**Dataset:**
+-
+data.csv (House Price Prediction: https://www.kaggle.com/datasets/shree1992/housedata)
 
 **Steps:**
+-
 1. Create Diagram
 2. Drag File import node from Sample
 3. Select Input Features and Partition Data (40,40,20 for validate, train, and test respetively)
@@ -14,7 +17,7 @@
 7. Run and Visualize results
 
 **Results:**
-
+-
 Number of Neighbors: 3
 - ![image](https://user-images.githubusercontent.com/98597962/160195973-0121d94f-e30a-496d-9d72-176eab68c93f.png)
 
